@@ -1,12 +1,13 @@
-package sha
+package keccak
 
 import (
-	"crypto/sha256"
+	"golang.org/x/crypto/sha3"
 	"encoding/hex"
 	"testing"
 )
 
 var (
+	result []byte //use this to avoid compiler optimization for unused variables/return values
 	ss = []string{
 		"",
 		"abc",
@@ -25,7 +26,7 @@ var (
 
 func TestCorrectness(t *testing.T) {
 	for _, s := range ss {
-		if Sha256(s) != libHash([]byte(s)) {
+		if ShaHex256([]byte(s)) != hex.EncodeToString(libHash([]byte(s))) {
 			t.Error("Hash is wrong!")
 			t.Fail()
 		}
@@ -33,23 +34,27 @@ func TestCorrectness(t *testing.T) {
 }
 
 func BenchmarkMySha256(b *testing.B) {
+	var res []byte
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < len(ss); j++ {
-			Sha256(ss[j])
+			res = Sha256([]byte(ss[j]))
 		}
 	}
+	result = res
 }
 
 func BenchmarkLibSha256(b *testing.B) {
+	var res []byte
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < len(ss); j++ {
-			libHash([]byte(ss[j]))
+			res = libHash([]byte(ss[j]))
 		}
 	}
+	result = res
 }
 
-func libHash(bv []byte) string {
-	hasher := sha256.New()
+func libHash(bv []byte) []byte {
+	hasher := sha3.New256()
 	hasher.Write(bv)
-	return hex.EncodeToString(hasher.Sum(nil))
+	return hasher.Sum(nil)
 }
